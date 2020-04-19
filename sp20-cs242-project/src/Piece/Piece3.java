@@ -8,7 +8,7 @@ import java.util.List;
 import object.Piece;
 import object.Square;
 
-//oppo L
+//oppo L, J-block
 public class Piece3 extends Piece {
 
 	public Piece3(Image image) {

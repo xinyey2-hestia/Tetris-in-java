@@ -51,6 +51,41 @@ public class Piece {
 		}
 	}
 
+	public int getMinXLocation() {
+		int result = Integer.MAX_VALUE;
+		for (Square square : this.squares) {
+			if (square.getBeginX() < result)
+				result = square.getBeginX();
+		}
+		return result;
+	}
+
+	public int getMaxXLocation() {
+		int result = Integer.MIN_VALUE;
+		for (Square square : this.squares) {
+			if (square.getBeginX() > result)
+				result = square.getBeginX();
+		}
+		return result;
+	}
+	
+	public int getMaxYLocation() {
+		int result = Integer.MIN_VALUE;
+		for (Square square : this.squares) {
+			if (square.getBeginY() > result)
+				result = square.getBeginY();
+		}
+		return result + SQUARE_BORDER;
+	}
+
+	public int getMinYLocation() {
+		int result = Integer.MAX_VALUE;
+		for (Square square : this.squares) {
+			if (square.getBeginY() < result)
+				result = square.getBeginY();
+		}
+		return result + SQUARE_BORDER;
+	}
 
 
 }// Piece
