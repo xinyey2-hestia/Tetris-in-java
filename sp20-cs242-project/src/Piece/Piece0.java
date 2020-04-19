@@ -6,7 +6,7 @@ import java.util.List;
 
 import object.Piece;
 import object.Square;
-//block
+//O-block 
 public class Piece0 extends Piece {
 
 	public Piece0(Image image) {

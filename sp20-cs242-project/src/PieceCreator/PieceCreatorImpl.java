@@ -34,6 +34,7 @@ public class PieceCreatorImpl implements PieceCreator {
 
 	private Random random = new Random();
 
+	// create random piece on given coordinate
 	public Piece createPiece(int x, int y) {
 
 		Piece piece = initPiece(getImage(random.nextInt(AMOUNTOFCOLOR)));
@@ -42,32 +43,29 @@ public class PieceCreatorImpl implements PieceCreator {
 		return piece;
 	}
 
-	public Piece getPiece() {
 
-		return null;
-	}
 
 	private Image getImage(int key) {
 		return images.get(key);
 	}
-
+// Give each piece its unique color
 	private Piece initPiece(Image image) {
 		int pieceType = random.nextInt(AMOUNTOFSQUARE);
 		switch (pieceType) {
 		case 0:
-			return new Piece0(images.get(new Integer(pieceType)));
+			return new Piece0(images.get(pieceType));
 		case 1:
-			return new Piece1(images.get(new Integer(pieceType)));
+			return new Piece1(images.get(pieceType));
 		case 2:
-			return new Piece2(images.get(new Integer(pieceType)));
+			return new Piece2(images.get(pieceType));
 		case 3:
-			return new Piece3(images.get(new Integer(pieceType)));
+			return new Piece3(images.get((pieceType)));
 		case 4:
-			return new Piece4(images.get(new Integer(pieceType)));
+			return new Piece4(images.get(pieceType));
 		case 5:
-			return new Piece5(images.get(new Integer(pieceType)));
+			return new Piece5(images.get(pieceType));
 		case 6:
-			return new Piece6(images.get(new Integer(pieceType)));
+			return new Piece6(images.get(pieceType));
 
 		}
 		return null;

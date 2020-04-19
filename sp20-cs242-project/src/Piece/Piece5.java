@@ -9,7 +9,7 @@ import object.Piece;
 import object.Square;
 
 public class Piece5 extends Piece {
-//oppo z
+//oppo z, S-block
 	public Piece5(Image image) {
 		// oppo z
 		List<Square> squares0 = new ArrayList<Square>();
