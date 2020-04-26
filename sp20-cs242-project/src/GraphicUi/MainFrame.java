@@ -466,9 +466,9 @@ public class MainFrame extends JFrame {
 			this.currentPiece.setSquaresXLocation(-minX);
 		}
 		int maxX = this.currentPiece.getMaxXLocation();
-		if (maxX > this.gamePanel.getWidth()) {
+		if (maxX >= this.gamePanel.getWidth()) {
 			this.currentPiece.setSquaresXLocation(this.gamePanel.getWidth()
-					- maxX);
+					- maxX-16);
 		}
 		this.gamePanel.repaint();
 	}
