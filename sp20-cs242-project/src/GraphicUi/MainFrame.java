@@ -229,10 +229,15 @@ public class MainFrame extends JFrame {
 			public void mouseClicked(MouseEvent e) {
 				pause();
 			}
-
 		});
 
-
+		this.nextTextJLabel.addMouseListener(new MouseAdapter() {
+			public void mouseClicked(MouseEvent e) {
+				addScore();
+				
+			}
+			
+		});
 
 
 		menuItem_game_exit.addActionListener(new ActionListener() {
@@ -630,12 +635,14 @@ public class MainFrame extends JFrame {
 		this.timer = new Timer();
 		// init timer
 		this.tetrisTask = new TetrisTask(this);
-		int time = 1000 / this.currentLevel;
-		this.timer.schedule(this.tetrisTask, 0, time);
-		this.pauseFlag = false;
 		this.currentLevel = 1;
 		this.score = 0;
 		this.scoreLabel.setText(String.valueOf(this.score));
+		this.levelLabel.setText(String.valueOf(this.currentLevel));
+		int time = 1000 / this.currentLevel;
+		this.timer.schedule(this.tetrisTask, 0, time);
+		this.pauseFlag = false;
+
 	}
 
 	private static final int NEXT_X = 360;
