@@ -29,12 +29,21 @@ class GamePanel extends JPanel {
 
 		Piece currentPiece = this.mainframe.getCurrentPiece();
 		ImageUtil.paintPiece(g, currentPiece);
-
 		Square[][] squares = this.mainframe.getSquares();
 		if (squares == null) {
 			return;// 
 		}
 
+		for (int i = 0; i < squares.length; i++) {
+			for (int j = 0; j < squares[i].length; j++) {
+				Square square = squares[i][j];
+				if (square != null)//
+					g.drawImage(square.getImage(), square.getBeginX(),
+							square.getBeginY(), this);
+			}
+		}
+
+		
 
 
 	}
