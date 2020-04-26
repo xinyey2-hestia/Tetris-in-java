@@ -42,6 +42,8 @@ import javax.swing.JFrame;
 import javax.swing.JPanel;
 import javax.swing.border.EmptyBorder;
 
+
+
 public class MainFrame extends JFrame {
 
 	private static final long serialVersionUID = 1L;
@@ -97,7 +99,7 @@ public class MainFrame extends JFrame {
 	private Box blankBox = Box.createHorizontalBox();
 
 	private Square[][] squares;
-	
+	TetrisTask tetrisTask;
 	private GamePanel gamePanel;
 	private PieceCreatorImpl pieceCreator = new PieceCreatorImpl();
 	private Piece currentPiece, nextPiece;
@@ -181,7 +183,7 @@ public class MainFrame extends JFrame {
 		} catch (Exception e) {
 		}*/
 		this.gamePanel = new GamePanel(this);
-		this.setSize(448, 635);
+		this.setSize(448, 624);
 		this.setLocation(250, 60);
 		this.setDefaultCloseOperation(DO_NOTHING_ON_CLOSE);
 		this.setResizable(false);
@@ -208,6 +210,12 @@ public class MainFrame extends JFrame {
 
 	private void initListeners() {
 
+		this.resumeJLabel.addMouseListener(new MouseAdapter() {
+
+			public void mouseClicked(MouseEvent e) {
+				resume();
+			}
+		});
 
 		this.startJLabel.addMouseListener(new MouseAdapter() {
 
@@ -215,6 +223,46 @@ public class MainFrame extends JFrame {
 				start();
 			}
 
+		});
+		this.pauseJLabel.addMouseListener(new MouseAdapter() {
+
+			public void mouseClicked(MouseEvent e) {
+				pause();
+			}
+
+		});
+
+
+
+
+		menuItem_game_exit.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent e) {
+				pause();
+				if (JOptionPane.showConfirmDialog(MainFrame.this, "Are tou sure you want to exit?",
+						"Exit", JOptionPane.OK_CANCEL_OPTION) == JOptionPane.OK_OPTION) {
+					System.exit(0);
+				}
+				resume();
+			}
+		});
+
+		lookRecord.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent e) {
+				pause();
+				JOptionPane.showMessageDialog(MainFrame.this, "Your highest score is: "+readscore());
+				resume();
+			}
+		});
+		
+		clearRecord.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent e) {
+				pause();
+				if (JOptionPane.showConfirmDialog(MainFrame.this, "Are tou sure you want to clear your record?",
+						"Exit", JOptionPane.OK_CANCEL_OPTION) == JOptionPane.OK_OPTION) {
+					changescore(0);
+				}
+				resume();
+			}
 		});
 
 		this.addWindowListener(new WindowAdapter() {
@@ -246,15 +294,17 @@ public class MainFrame extends JFrame {
 	}// initListeners()
 
 	public void down() {
-		if (this.pauseFlag || this.currentPiece == null ) {
+		if (this.pauseFlag || this.currentPiece == null || isBlock()
+				|| isButtom()) {
 			return;
 		}
 		this.currentPiece.setSquaresYLocation(Piece.SQUARE_BORDER);
+		showNext();
 		this.gamePanel.repaint();
 	}
 
 	public void leftMove(int size) {
-		if (this.pauseFlag || this.currentPiece == null 
+		if (this.pauseFlag || this.currentPiece == null || isLeftBlock()
 				|| this.currentPiece.getMinXLocation() <= 0) {
 			return;
 		}
@@ -265,7 +315,7 @@ public class MainFrame extends JFrame {
 	public void rightMove(int size) {
 		if (this.pauseFlag
 				|| this.currentPiece == null
-			
+				|| isRightBlock()
 				|| this.currentPiece.getMaxXLocation() + Piece.SQUARE_BORDER >= this.gamePanel
 						.getWidth()) {
 			return;
@@ -274,7 +324,136 @@ public class MainFrame extends JFrame {
 		this.gamePanel.repaint();
 	}
 
-                             
+	public void addScore() {
+		this.score += 10;
+		this.scoreLabel.setText(String.valueOf(score));
+		// score |10, level up
+		if ((this.score % 10) == 0) {
+			this.currentLevel += 1;
+			this.levelLabel.setText(String.valueOf(this.currentLevel));
+			// set timer
+			this.timer.cancel();
+			this.timer = new Timer();
+			this.tetrisTask = new TetrisTask(this);
+			int time = 1000 / this.currentLevel;
+			timer.schedule(this.tetrisTask, 0, time);
+		}
+	}
+
+	// 
+	private void finishDown() {
+
+		this.currentPiece = this.nextPiece;
+		this.currentPiece.setSquaresXLocation(-NEXT_X);// cancel
+		this.currentPiece.setSquaresXLocation(BEGIN_X);// place
+		this.currentPiece.setSquaresYLocation(-NEXT_Y);
+		this.currentPiece.setSquaresYLocation(BEGIN_Y);
+
+		createNextPiece();
+	}
+
+	private void appendToSquares() {
+		for (Square square : this.getCurrentPiece().getSquares()) {
+			for (int i = 0; i < this.squares.length; i++)
+				for (int j = 0; j < squares[i].length; j++) {
+					if (square.equals(this.squares[i][j]))
+						this.squares[i][j] = square;
+				}
+		}
+	}
+
+	private boolean handleDown(List<Integer> rowIndexs) {
+		if (rowIndexs.size() == 0)
+			return false;
+		int minCleanRow = rowIndexs.get(0);
+		int cleanRowSize = rowIndexs.size();
+		for (int j = this.squares[0].length - 1; j >= 0; j--) {
+			if (j < minCleanRow) {
+				for (int i = 0; i < this.squares.length; i++) {
+					Square square = this.squares[i][j];
+					if (square.getImage() != null) {
+						Image image = square.getImage();
+						square.setImage(null);
+						this.squares[i][j + cleanRowSize].setImage(image);
+					}
+				}
+			}
+		}
+
+		return true;
+
+	}
+
+	private boolean cleanRows() {
+		List<Integer> rowIndex = new ArrayList<Integer>();
+		for (int j = 0; j < this.squares[0].length; j++) {
+			int count = 0;
+			for (int i = 0; i < this.squares.length
+					&& this.squares[i][j].getImage() != null; i++) {
+				count++;
+			}
+			if (count == this.squares.length) {
+				rowIndex.add(j);
+				for (int i = 0; i < this.squares.length; i++) {
+					Square square = this.squares[i][j];
+					square.setImage(null);
+				}
+				addScore();
+				int x=readscore();
+				if (this.score>x) {
+					changescore(this.score);
+				}
+			}
+		}
+		return handleDown(rowIndex);
+	}
+
+	public void showNext() {
+		if (isBlock() || isButtom()) {
+			appendToSquares();
+			if (isLost()) {
+				this.repaint();
+				this.timer.cancel();
+				this.currentPiece = null;
+
+				JOptionPane.showMessageDialog(this, "You Lose!", "Game Over",
+						JOptionPane.INFORMATION_MESSAGE);
+				return;
+			}
+		
+			boolean haveCleared = cleanRows();
+			finishDown();
+			try {
+				Thread.sleep((long) (800/Math.pow(this.currentLevel, 0.25)));
+			} catch (InterruptedException e1) {
+				e1.printStackTrace();
+			}
+			if (haveCleared) {
+				try {
+					Thread.sleep(600);
+				} catch (InterruptedException e1) {
+					e1.printStackTrace();
+				}
+			}
+		}
+	}
+
+	private void pause() {
+		this.pauseFlag = true;
+		if (this.timer != null)
+			this.timer.cancel();
+		this.timer = null;
+	}
+
+	private void resume() {
+		if (!this.pauseFlag)
+			return;
+		this.timer = new Timer();
+		this.tetrisTask = new TetrisTask(this);
+		int time = 1000 / this.currentLevel;
+		timer.schedule(this.tetrisTask, 0, time);
+		this.pauseFlag = false;
+	}
 
 	private void change() {
 		if (this.pauseFlag || this.currentPiece == null)
@@ -295,7 +474,57 @@ public class MainFrame extends JFrame {
 	}
 
 
+	public boolean isLeftBlock() {
+		List<Square> squares = this.getCurrentPiece().getSquares();
+		for (Square square : squares) {
+			if (this.getSquare(square.getBeginX() - Piece.SQUARE_BORDER,
+					square.getBeginY()) != null)
+				return true;
+		}
+		return false;
+	}
 
+
+	public boolean isRightBlock() {
+		List<Square> squares = this.getCurrentPiece().getSquares();
+		for (Square square : squares) {
+			if (this.getSquare(square.getBeginX() + Piece.SQUARE_BORDER,
+					square.getBeginY()) != null)
+				return true;
+		}
+		return false;
+	}
+
+//bottom?
+	public boolean isButtom() {
+		if (this.currentPiece == null)
+			return false;
+		return this.currentPiece.getMaxYLocation() + Piece.SQUARE_BORDER * 3 >= this.gamePanel
+				.getHeight();
+	}
+
+	public boolean isBlock() {
+		if (this.getCurrentPiece() != null) {
+			List<Square> squares = this.getCurrentPiece().getSquares();
+			if (squares != null)
+				for (Square square : squares) {
+					if (this.getSquare(square.getBeginX(), square.getBeginY()
+							+ Piece.SQUARE_BORDER) != null)
+						return true;
+				}
+		}
+		return false;
+
+	}
+
+
+	private boolean isLost() {
+		for (Square[] squares : getSquares()) {
+			if (squares[0].getImage() != null)
+				return true;
+		}
+		return false;
+	}
 
 	public Square[][] getSquares() {
 		return squares;
@@ -351,7 +580,46 @@ public class MainFrame extends JFrame {
 
 	}
 
-
+	public int readscore() {
+		  try {
+			  	String cd="resource" + File.separator + "properties"
+	    				+ File.separator + "record" + ".txt";
+			    Scanner scanner = new Scanner(new File(cd));
+	            Integer [] score = new Integer [30];
+	            int i=0;
+	            int digit;
+	            while(scanner.hasNextInt())
+	            {
+	                 score[i++] = scanner.nextInt();
+	            }
+	            String s="";
+	            for (int j=0; j<score.length-1; j++) {
+	            	if (score[j]==null)
+	            		break;
+	            	s=s+ score[j];
+	            }
+	            int ret=Integer.parseInt(s);
+	            scanner.close();
+	            return ret;
+	 
+	        } catch (IOException e) {
+	            e.printStackTrace();
+	        }
+		return 0;
+		
+	}
+	
+	public void changescore(int newscore) {
+		try {
+			String cd="resource" + File.separator + "properties"+ File.separator + "record" + ".txt";
+			FileWriter writer = new FileWriter(cd, false);
+			writer.write(newscore+"");
+			writer.close();
+		} catch (IOException e) {
+			e.printStackTrace();
+			}		  
+	}
+	
 	private void start() {
 		initSquares();
 		if (this.timer != null) {
@@ -359,7 +627,15 @@ public class MainFrame extends JFrame {
 		}
 		createNextPiece();
 		this.currentPiece = pieceCreator.createPiece(BEGIN_X, BEGIN_Y);
-
+		this.timer = new Timer();
+		// init timer
+		this.tetrisTask = new TetrisTask(this);
+		int time = 1000 / this.currentLevel;
+		this.timer.schedule(this.tetrisTask, 0, time);
+		this.pauseFlag = false;
+		this.currentLevel = 1;
+		this.score = 0;
+		this.scoreLabel.setText(String.valueOf(this.score));
 	}
 
 	private static final int NEXT_X = 360;
@@ -370,3 +646,26 @@ public class MainFrame extends JFrame {
 
 }// MainFrame
 
+class TetrisTask extends TimerTask {
+
+	private MainFrame mainFrame;
+
+	public TetrisTask(MainFrame mainFrame) {
+		this.mainFrame = mainFrame;
+	}
+
+	public void run() {
+	
+		Piece currentPiece = this.mainFrame.getCurrentPiece();
+
+		if (currentPiece != null) {
+			if (this.mainFrame.isBlock() || this.mainFrame.isButtom()) {
+				this.mainFrame.showNext();
+				return;
+			}
+
+			currentPiece.setSquaresYLocation(Piece.SQUARE_BORDER);
+		}
+		this.mainFrame.getGamePanel().repaint();
+	}
+}

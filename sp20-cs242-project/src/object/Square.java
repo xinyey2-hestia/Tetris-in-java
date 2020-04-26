@@ -44,7 +44,14 @@ public class Square {
 		this.beginY = beginY;
 	}
 
-
+	public boolean equals(Object object) {
+		if (object instanceof Square) {
+			Square s = (Square) object;
+			return this.getBeginX() == s.getBeginX()
+					&& this.getBeginY() == s.getBeginY();
+		}
+		return false;
+	}
 
 
 }// Square
